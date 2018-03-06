@@ -1,0 +1,45 @@
+River,n_species,Area,Nitrate,Solid_Residue
+Penobscot,9,8440,0.8,57
+Kennebec,8,5960,0.4,31
+Androscoggin,7,3510,0.6,65
+Saco,6,1730,0.8,33
+Merrimac,11,5020,2.6,78
+Blackstone,8,425,8.4,120
+Thames,7,1480,3.5,86
+Connecticut,11,11500,1.3,75
+Housatonic,11,2050,2.1,138
+Hudson,14,13500,0.8,101
+Delaware,13,11100,8.7,122
+Susquehanna,11,27900,3.4,164
+Potomac,14,14400,3.7,156
+Rappahannock,9,2560,1.1,47
+York,7,2790,0.7,59
+James,12,9850,1.2,102
+Chowan,9,4870,1.2,99
+Roanoke,10,9680,4.1,85
+Pamlico,12,4150,1.8,82
+Neuse,15,5490,2.6,76
+Cape Fear,20,9000,1.3,78
+Waccamaw,10,2100,0.7,30
+Pee Dee,13,14400,0.5,57
+Cooper-Santee,21,17300,0.5,57
+Edisto,8,3440,0.8,53
+Savannah,21,10800,0.6,49
+Ogeechee,12,4360,0.1,55
+Altamaha,8,14700,0.6,45
+Satilla,2,3720,0.2,29
+St. Marys,4,1870,0.5,64
+St. Johns,10,8800,0.9,391
+Kissimmee,7,3190,0.9,88
+Peace,9,2260,0.8,257
+Myakka,6,657,0.2,105
+Alafia,3,521,1.6,520
+Hillsborough,8,719,0.6,171
+Withlacoochee,9,2120,0.3,229
+Waccasassa,2,349,1,461
+Suwannee,13,10100,1,133
+Ochlockonee,20,3010,0.8,81
+Appalachicola,33,19700,0.7,55
+Choctawhatchee,18,4770,1.1,57
+Yellow,11,1380,0.2,44
+Escambia,23,4270,0.1,61

@@ -1,0 +1,130 @@
+---
+title: "Poisson Regression Application"
+subtitle: "Statistical Inference II"
+author: "Noah"
+date: "March 6, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+Source: J.J. Sepkoski, Jr., M.A. Rex (1974). "Distribution of Freshwater Mussels: Coastal Rivers as Biogeographic Islands," Systematic Zoology, Vol. 23, #2, pp. 165-188.
+
+Using the mussels.csv dataset on Canvas>Modules, we will look at the relationship between the Area (sq. mi) and number of species.
+
++ Using R, fit a Poisson regression. Note the parameter estimates. How does R calculate these parameter estimates?
+
+```{r}
+mussels <- read.csv("L:/Noah Johnson/stats/u/mussels.csv")
+
+model <- glm(n_species ~ Area, poisson, data=mussels)
+
+summary(model)
+```
+
+R calculates the fitted model $\lambda = E(n\_species| Area) = e^{2.141 + 0.000038 * Area}$.
+
+R calculates these parameters via gradient descent on the negative log-likelihood of $\hat{\beta}$ given the data.
+
+I.e. for the function: $L(\beta | X, Y) = \sum\limits_{i=1}^p{(y_i * \beta^Tx_i - e^{\beta^Tx_i})}$,
+
+R solves the equation $\frac{\partial L}{\partial \beta} = 0$.
+
++ Using R calculate confidence interval for the $\beta_1$ parameter. How does R calculate these values?
+
+```{r}
+confint(model, "Area")
+```
+
+R calculates this interval using the standard error of the parameter.
+
+```{r}
+model.coef <- summary(model)$coefficients
+
+print(sprintf("[%f, %f]", 
+              model.coef[[2,1]] - qt(0.975, 42) * model.coef[[2,2]], 
+              model.coef[[2,1]] + qt(0.975, 42) * model.coef[[2,2]]))
+```
+
++ Interpret the point estimate of the $\beta_1$ parameter as well as the confidence interval.
+
+$\hat{\beta_1}$ tells us that for every 1 unit increase in Area, the expected count of number of species is scaled (multiplied) by $e^{0.000038} =$ `r exp(0.000038)`. So the expected number of species increases as Area increases.
+
+We interpret the confidence interval as us being 95% confident that the number of species increases between $e^{0.000025} =$ `r exp(0.000025)` and $e^{0.00005} =$ `r exp(0.00005)` for each additional square mile in Area.
+
+## Categorical Predictors
+
++ Going back to the air traffic data from last class, fit a model that includes both the **n.operator** and **age** as predictors. Interpret all parameter estimates.
+
+```{r}
+# Load data
+air <- read.table("http://stat.ufl.edu/~winner/data/atc_error_ageexp.dat")
+names(air) <- c("experience", "age", "n.error", "n.operator")
+
+# Fit poisson regression
+airModel <- glm(n.error ~ n.operator + age, family = poisson, data = air)
+
+# Display parameter estimates
+summary(airModel)$coefficients
+```
+
+The parameter estimate for number of operators tells us that holding age fixed, for every 1 additional operator, the expected number of errors is scaled (multiplied) by $e^{0.00015} =$ `r exp(0.00015)`. So the expected number of errors increases (slowly) as more operators are added.
+
+A similar interpretation applies to the age parameter estimate, which scales the expected errors by $e^{-1.989} =$ `r exp(-1.989)`. So the expected number of errors decreases quite dramatically as age switches from younger than 55 to older than 55.
+
++ What is the expected number of errors for an air traffic control staff who works at a site with 100 operators and who is younger than 55? What is the expected number of errors for an air traffic control staff who works at a site with 100 operators and who is older than 55? 
+
+```{r}
+young_air <- air %>% as_tibble() %>% filter(age == 1) %>% select(-age)
+
+youngModel <- glm(n.error ~ n.operator, family = poisson, data = young_air)
+young.coef <- summary(youngModel)$coefficients
+print(young.coef)
+
+print(sprintf("The expected number of errors for an air traffic control staff who works at a site with 100 operators and who is younger than 55 is %.2f.", exp(young.coef[[1,1]] + young.coef[[2,1]] * 100)))
+```
+
+```{r}
+old_air <- air %>% as_tibble() %>% filter(age == 2) %>% select(-age)
+
+oldModel <- glm(n.error ~ n.operator, family = poisson, data = old_air)
+old.coef <- summary(oldModel)$coefficients
+print(old.coef)
+
+print(sprintf("The expected number of errors for an air traffic control staff who works at a site with 100 operators and who is older than 55 is %.2f.", exp(old.coef[[1,1]] + old.coef[[2,1]] * 100)))
+```
+
+
+
++ Compare the larger model to the reduced model. Which model has better fit?
+
+Let's use the likelihood ratio test:
+
+```{r}
+airModel.smaller <- glm(n.error ~ n.operator, family = poisson, data = air)
+
+MaxLogLik <- logLik(airModel)[1]
+MaxLogLik.smaller <- logLik(airModel.smaller)[1]
+
+print(MaxLogLik)
+print(MaxLogLik.smaller)
+```
+
+Ok, so the larger model gives a larger maximum log likelihood, as expected (it's less negative).
+
+```{r}
+LR <- 2 * (MaxLogLik - MaxLogLik.smaller)
+print(LR)
+```
+
+This statistic should follow a $\chi^2$ distribution with 1 degree of freedom (the difference in number of parameters between the two models). So what are the chances that we see a value this large just by chance?
+
+```{r}
+pchisq(LR, 1, lower.tail = FALSE)
+```
+
+Wow, that is small! Ok, so the larger model seems to increase the maximum likelihood more than we would expect it to if age didn't matter. So it seems there is evidence to support that the larger model which includes age better explains the data compared to the reduced model.
