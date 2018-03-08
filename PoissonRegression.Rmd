@@ -16,10 +16,10 @@ Source: J.J. Sepkoski, Jr., M.A. Rex (1974). "Distribution of Freshwater Mussels
 
 Using the mussels.csv dataset on Canvas>Modules, we will look at the relationship between the Area (sq. mi) and number of species.
 
-+ Using R, fit a Poisson regression. Note the parameter estimates. How does R calculate these parameter estimates?
++ **Using R, fit a Poisson regression. Note the parameter estimates. How does R calculate these parameter estimates?**
 
 ```{r}
-mussels <- read.csv("L:/Noah Johnson/stats/u/mussels.csv")
+mussels <- read.csv("mussels.csv")
 
 model <- glm(n_species ~ Area, poisson, data=mussels)
 
@@ -34,7 +34,7 @@ I.e. for the function: $L(\beta | X, Y) = \sum\limits_{i=1}^p{(y_i * \beta^Tx_i 
 
 R solves the equation $\frac{\partial L}{\partial \beta} = 0$.
 
-+ Using R calculate confidence interval for the $\beta_1$ parameter. How does R calculate these values?
++ **Using R calculate confidence interval for the $\beta_1$ parameter. How does R calculate these values?**
 
 ```{r}
 confint(model, "Area")
@@ -79,28 +79,24 @@ A similar interpretation applies to the age parameter estimate, which scales the
 + What is the expected number of errors for an air traffic control staff who works at a site with 100 operators and who is younger than 55? What is the expected number of errors for an air traffic control staff who works at a site with 100 operators and who is older than 55? 
 
 ```{r}
-young_air <- air %>% as_tibble() %>% filter(age == 1) %>% select(-age)
+m.coef <- summary(airModel)$coefficients
 
-youngModel <- glm(n.error ~ n.operator, family = poisson, data = young_air)
-young.coef <- summary(youngModel)$coefficients
-print(young.coef)
+younger_mean_errors <- exp(m.coef[[1,1]] + m.coef[[2,1]] * 100 + m.coef[[3,1]])
 
-print(sprintf("The expected number of errors for an air traffic control staff who works at a site with 100 operators and who is younger than 55 is %.2f.", exp(young.coef[[1,1]] + young.coef[[2,1]] * 100)))
+print(sprintf("The expected number of errors for an air traffic control staff who works at a site with 100 operators and who is younger than 55 is %.2f.", younger_mean_errors))
+
+older_mean_errors <- exp(m.coef[[1,1]] + m.coef[[2,1]] * 100 + 2* m.coef[[3,1]])
+
+print(sprintf("The expected number of errors for an air traffic control staff who works at a site with 100 operators and who is older than 55 is %.2f.", older_mean_errors))
+
+print(sprintf("The ratio of older to younger expected errors tells us the scale factor when going from younger to older: %.3f.", older_mean_errors / younger_mean_errors))
+
+print(sprintf("This is the same as the exponent of the coefficient for age: %.3f.", exp(m.coef[[3,1]])))
 ```
 
-```{r}
-old_air <- air %>% as_tibble() %>% filter(age == 2) %>% select(-age)
+## Compare the larger model to the reduced model. Which model has better fit?    
+  
 
-oldModel <- glm(n.error ~ n.operator, family = poisson, data = old_air)
-old.coef <- summary(oldModel)$coefficients
-print(old.coef)
-
-print(sprintf("The expected number of errors for an air traffic control staff who works at a site with 100 operators and who is older than 55 is %.2f.", exp(old.coef[[1,1]] + old.coef[[2,1]] * 100)))
-```
-
-
-
-+ Compare the larger model to the reduced model. Which model has better fit?
 
 Let's use the likelihood ratio test:
 
@@ -121,10 +117,33 @@ LR <- 2 * (MaxLogLik - MaxLogLik.smaller)
 print(LR)
 ```
 
-This statistic should follow a $\chi^2$ distribution with 1 degree of freedom (the difference in number of parameters between the two models). So what are the chances that we see a value this large just by chance?
+This statistic should follow a $\chi^2$ distribution with 1 degree of freedom (the difference in number of parameters between the two models). So what are the chances that we see a value this large or larger just by chance?
 
 ```{r}
 pchisq(LR, 1, lower.tail = FALSE)
 ```
 
 Wow, that is small! Ok, so the larger model seems to increase the maximum likelihood more than we would expect it to if age didn't matter. So it seems there is evidence to support that the larger model which includes age better explains the data compared to the reduced model.
+
+```{r}
+a <- anova(airModel.smaller, airModel)
+print(a)
+
+pchisq(a$Deviance[2], df=1, lower.tail=FALSE)
+```
+
+###Residual Plot
+
+```{r}
+airModel.smaller %>% ggplot(aes(x=.fitted, y=.resid)) + 
+  geom_point() +
+  geom_line(y=0) +
+  geom_smooth(method = "loess") +
+  ggtitle("Reduced Model")
+
+airModel %>% ggplot(aes(x=.fitted, y=.resid)) + 
+  geom_point() +
+  geom_line(y=0) +
+  geom_smooth(method = "loess") +
+  ggtitle("Full Model")
+```
