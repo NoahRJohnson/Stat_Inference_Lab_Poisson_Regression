@@ -10,6 +10,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(MASS) # has glm.nb
 ```
 
 Source: J.J. Sepkoski, Jr., M.A. Rex (1974). "Distribution of Freshwater Mussels: Coastal Rivers as Biogeographic Islands," Systematic Zoology, Vol. 23, #2, pp. 165-188.
@@ -132,7 +133,7 @@ print(a)
 pchisq(a$Deviance[2], df=1, lower.tail=FALSE)
 ```
 
-###Residual Plot
+### Residual Plot
 
 ```{r}
 airModel.smaller %>% ggplot(aes(x=.fitted, y=.resid)) + 
@@ -146,4 +147,25 @@ airModel %>% ggplot(aes(x=.fitted, y=.resid)) +
   geom_line(y=0) +
   geom_smooth(method = "loess") +
   ggtitle("Full Model")
+```
+
+## Overdispersion
+
+```{r}
+airModel.od <- glm(n.error ~ n.operator + age, family = quasipoisson, data = air)
+
+summary(airModel.od)
+summary(airModel)
+```
+
+```{r}
+# Manually calculate phi, the overdispersion parameter
+phi <- sum((resid(airModel, type='pearson'))^2) / airModel$df.residual
+
+print(phi)
+```
+
+```{r}
+airModel.nb <- glm.nb(n.error ~ n.operator + age, data = air)
+summary(airModel.nb)
 ```
